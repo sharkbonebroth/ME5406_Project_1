@@ -8,8 +8,7 @@ import os
 import imageio
 import copy
 import argparse
-
-import argparse
+import csv
 
 parser = argparse.ArgumentParser(
     prog = "main.py",
@@ -27,6 +26,8 @@ parser.add_argument("-gamma", type = float, default = 0.95, help = "Discounting 
 # Environment arguments
 parser.add_argument("-width", type = int, default = 0, help = "Width of the grid. Not setting width and height results in the basic 4x4 grid initialization")
 parser.add_argument("-height", type = int, default = 0, help = "Width of the grid. Not setting width and height results in the basic 4x4 grid initialization")
+parser.add_argument("-saveGridFile", type = str, default = "", help = "File to save the generated environment, so the environment can be reused")
+parser.add_argument("-gridFile", type = str, default = "", help = "gridFile to load and use as the environment")
 
 # Additional general arguments
 parser.add_argument("-taperEpsilon", type = bool, default = False, help = "Setting this to true will reduce episilon logarithmically as training progresses")
@@ -55,7 +56,7 @@ parser.add_argument("-QTableLogInterval", type = int, default = 10000, help = "R
 
 # Grid class handles the state of the environment
 class Grid:
-    def __init__(self, extendedInit: bool = False):
+    def __init__(self):
         self.initRewards()
 
     THINICEGRIDVALUE = -1
@@ -128,6 +129,41 @@ class Grid:
                 numThinIcePlaced += 1
             else:
                 self.grid[newThinIcePosition[0]][newThinIcePosition[1]] = self.EMPTYGRIDVALUE
+
+
+    def initGridFromFile(self, fileName: str):
+        print(f"Loading grid from file {fileName}...")
+        with open(fileName,'r') as f:
+            reader = csv.reader(f, delimiter=',')
+            shape = next(reader)
+            height = int(shape[0])
+            width = int(shape[1])
+            self.grid = np.zeros(shape = (height, width), dtype=int)
+
+            for row in reader:
+                coords_y = int(row[1][1])
+                coords_x = int(row[1][4])
+                if row[0] == 'x':
+                    self.grid[coords_y][coords_x] = self.THINICEGRIDVALUE
+                elif row[0] == 'g':
+                    self.grid[coords_y][coords_x] = self.GOALGRIDVALUE
+
+        print("Successfully loaded!") 
+        self.printGrid()
+
+    def saveGridToFile(self, fileName: str):
+        data = []
+        data.append((self.grid.shape[0], self.grid.shape[1]))
+
+        for i in range(self.grid.shape[0]):
+            for j in range(self.grid.shape[1]):
+                if self.grid[i][j] == self.THINICEGRIDVALUE:
+                    data.append(('x', (i, j)))
+                elif self.grid[i][j] == self.GOALGRIDVALUE:
+                    data.append(('g', (i, j)))
+
+        with open(fileName, 'w') as f:
+            csv.writer(f).writerows(data)
 
     # Sets the reward values for the different cell types
     def initRewards(self):
@@ -709,7 +745,9 @@ if __name__ == "__main__":
     environment = Grid()
     startPosition = (0, 0)
 
-    if args.width == 0 or args.height == 0:
+    if args.gridFile != "":
+        environment.initGridFromFile(args.gridFile)
+    elif args.width == 0 or args.height == 0:
         print("No width or height specified. Defaulting to basic 4x4 environment...")
         environment.initGridBasic()
     else:
@@ -791,4 +829,9 @@ if __name__ == "__main__":
 
     print(f"Saving results to ./{saveDir}...")
     RLSolver.progressTracker.saveProgressData(saveDir)
+
+    # Save grid file
+    if args.saveGridFile != "":
+        environment.saveGridToFile(args.saveGridFile)
+
     print("done!")

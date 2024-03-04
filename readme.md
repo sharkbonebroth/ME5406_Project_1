@@ -33,20 +33,22 @@ The main executable is [main.py](main.py).
 5. **-width**: width of the grid. Not setting width and height results in the basic 4x4 grid initialization
 6. **-height**: Height of the grid. Not setting width and height results in the basic 4x4 grid initialization
 7. **-saveDir**: Where the training data is saved to. If not set, the script will create a directory with the name of the algorithm that is used, and use that
+8. **-saveGridFile**: File to save the generated environment to, so the environment can be reused
+8. **-gridFile**: File to load the environment from. This allows us to reuse environments across runs to test the algorithms reliably
 
-Other arguments and their descriptions can be found by running
+Other arguments and their descriptions can be found by running. Adjusting their values can lead to different performances, details of which are provided in the report.
 
 ```
 main.py -h
 ```
 ### Examples
-If we want to use FVMC in a 10x10 map with a batch size of 10, we run
+If we want to use FVMC with a batch size of 10, and use the environment stored in [testEnvironment.csv](testEnvironment.csv), we run
 ```
-main.py -algorithm FVMC -batchSize 10 -width 10 -height 10
+main.py -algorithm FVMC -batchSize 10 -gridFile grid.csv
 ```
-And if we want to use Q Learning in a 12x12 map with a learning rate of 0.1 and discounting factor of 0.99, we run
+And if we want to use Q Learning in a 12x12 map with a learning rate of 0.1 and discounting factor of 0.99, and save the generated environment to the file out.csv, we run
 ```
-main.py -algorithm Q -width 12 -height 12 -alpha 0.1 -gamma 0.99
+main.py -algorithm Q -width 12 -height 12 -alpha 0.1 -gamma 0.99 -saveGridFile out.csv
 ```
 
 ## Visualization
