@@ -32,11 +32,6 @@ parser.add_argument("-gridFile", type = str, default = "", help = "gridFile to l
 # Additional general arguments
 parser.add_argument("-taperEpsilon", type = bool, default = False, help = "Setting this to true will reduce episilon logarithmically as training progresses")
 parser.add_argument("-halfEvery", type = int, default = 50000, help = "Sets the rate at which epsilon decreases, if taperEpsilon is set to true")
-parser.add_argument("-noUselessMoves", type = bool, default = False, 
-                    help ="Setting this to true will ensure that the robot checks if a move does not move it out of the grid before allowing it to \
-                            be considered")
-parser.add_argument("-penalizeBackTracking", type = bool, default = False,
-                    help = "Setting this to true will penalize doing moves that undo the previous move")
 
 # First Visit Monte Carlo arguments
 parser.add_argument("-prune", type = bool, default = False, 
@@ -46,7 +41,12 @@ parser.add_argument("-batchSize", type = int, default = 2, help = "Size of each 
 parser.add_argument("-adjustmentRate", type = float, default = 1.0, 
                     help = "Modifies the FVMC update rule to step towards the new QTable value instead of directly replacing the QTable value with \
                             the new QTable value observed in a batch of episodes")
-
+parser.add_argument("-noUselessMoves", type = bool, default = False, 
+                    help ="Setting this to true will ensure that the robot checks if a move does not move it out of the grid before allowing it to \
+                            be considered")
+parser.add_argument("-penalizeBackTracking", type = bool, default = False,
+                    help = "Setting this to true will penalize doing moves that undo the previous move")
+                    
 # Q Learning and SARSA arguments
 parser.add_argument("-alpha", type = float, default = 0.0005, help = "Learning rate")
 
@@ -575,7 +575,7 @@ class firstVisitMonteCarlo:
                     for k in range(self.robot.numPossibleActions):
                         if (encounteredTable[i][j][k]):
                             returns = returnTable[i][j][k] # A list of values across the batch for a particular state action pair
-                            averageValue = np.sum(returns)/ np.count_nonzero(returns)
+                            averageValue = np.sum(returns)/ np.count_nonzero(returns) # Get the average value of that state action pair across all episodes in this batch
                             difference = averageValue - self.QTable.QTable[i][j][k]
                             differences.append(difference)
                             self.QTable.QTable[i][j][k] += difference * adjustmentRate 
@@ -591,11 +591,12 @@ class firstVisitMonteCarlo:
                 self.progressTracker.QTableTracker.update(self.QTable, iterationNum+1)
             
             # Calculate the L2 norm of the differences. If its less than the threshold, stop
-            totalSquaredDifferences = 0
-            for difference in differences:
-                totalSquaredDifferences += difference**2
-            L2Difference = totalSquaredDifferences**0.5
+            # totalSquaredDifferences = 0
+            # for difference in differences:
+            #     totalSquaredDifferences += difference**2
+            # L2Difference = totalSquaredDifferences**0.5
             # if (L2Difference < 0.000001):
+            #     print("L2Difference is less than the threshold. Stopping early...")
             #     break
         
         self.QTable.printQTable()
@@ -791,9 +792,7 @@ if __name__ == "__main__":
             gamma = args.gamma,
             alpha = args.alpha,
             logStepsAndRewardsInterval = args.dataLogInterval,
-            logQTableProgessInterval = args.QTableLogInterval,
-            noUselessMoves = args.noUselessMoves,
-            penalizeBackTracking = args.penalizeBackTracking
+            logQTableProgessInterval = args.QTableLogInterval
         )
 
         RLSolver.train(

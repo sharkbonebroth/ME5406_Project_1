@@ -42,9 +42,9 @@ Other arguments and their descriptions can be found by running. Adjusting their 
 main.py -h
 ```
 ### Examples
-If we want to use FVMC with a batch size of 10, and use the environment stored in [testEnvironment.csv](testEnvironment.csv), we run
+If we want to use FVMC with a batch size of 10, and use the environment stored in [advancedEnvironment1.csv](advancedEnvironment1.csv), we run
 ```
-main.py -algorithm FVMC -batchSize 10 -gridFile grid.csv
+main.py -algorithm FVMC -batchSize 10 -gridFile advancedEnvironment1.csv
 ```
 And if we want to use Q Learning in a 12x12 map with a learning rate of 0.1 and discounting factor of 0.99, and save the generated environment to the file out.csv, we run
 ```
